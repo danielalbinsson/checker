@@ -36,7 +36,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="m-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">URL Checker</h1>
         <div className="flex items-center space-x-4">
@@ -60,9 +60,9 @@ export default function HomePage() {
           </DropdownMenu>
         </div>
       </div>
-      <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 mt-8 mb-8">
         <div className="flex-grow">
-          <Label htmlFor="newUrl">New URL</Label>
+          <Label htmlFor="newUrl">Add a URL to check</Label>
           <Input
             id="newUrl"
             value={newUrl}

@@ -1,4 +1,5 @@
 module.exports = {
+  mode: 'jit',  // Enable JIT mode
   content: [
     './pages/**/*.{js,ts,jsx,tsx}',   // Ensure that your `pages/` directory is included
     './components/**/*.{js,ts,jsx,tsx}', // Ensure your `components/` directory is included

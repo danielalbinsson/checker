@@ -72,4 +72,11 @@ body {
   * {
     border: 1px solid var(--border-color); /* Replace with your border color */
   }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: Open Sans, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
 }

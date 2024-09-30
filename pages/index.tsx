@@ -27,59 +27,45 @@ export default function HomePage() {
   const [newFrequency, setNewFrequency] = useState('1');
   const [error, setError] = useState('');
   const [isClient, setIsClient] = useState(false); // State to track if we are on the client
+  const [userEmail, setUserEmail] = useState<string | null>(null); // Store the user email
 
+  // Check if we're on the client-side
   useEffect(() => {
-    setIsClient(true); // Set this to true once the component has mounted (client-side)
+    setIsClient(true); 
   }, []);
 
-  const isAuthenticated = () => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return !!localStorage.getItem('token');
-  };
-
+  // Fetch URLs from the backend after checking authentication
   useEffect(() => {
     if (!isClient) return; // Only proceed if we are on the client side
 
-    if (!isAuthenticated()) {
-      router.push('/login'); // Redirect to login if the user is not authenticated
-      return;
-    }
-
-    // Fetch URLs from the backend
     const fetchUrls = async () => {
       try {
-        const token = localStorage.getItem('token');
         const response = await axios.get('http://localhost:4000/api/geturls', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          withCredentials: true // Important: Sends the session cookie with the request
         });
-        setUrls(response.data);
+        setUrls(response.data); // Set the URLs received from the backend
+        setUserEmail(response.data.email); // Assuming the email is part of the response
       } catch (error) {
-        console.error('Error fetching URLs:', error);
-        setError('Failed to fetch URLs');
+        if (error.response && error.response.status === 401) {
+          // If unauthorized, redirect to login
+          router.push('/login');
+        } else {
+          console.error('Error fetching URLs:', error);
+          setError('Failed to fetch URLs');
+        }
       }
     };
 
     fetchUrls();
   }, [isClient, router]);
 
-  if (!isClient) {
-    // Don't render anything until we're on the client
-    return null;
-  }
-
+  // Function to add a new URL
   const addUrl = async () => {
     if (newUrl) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.post('http://localhost:4000/api/addurl', { url: newUrl }, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await axios.post('http://localhost:4000/api/addurl', 
+        { url: newUrl, frequency: newFrequency }, 
+        { withCredentials: true }); // Important: Sends the session cookie with the request
         setUrls([...urls, response.data.url]); // Add the new URL to the list
         setNewUrl(''); // Clear the input
         setNewFrequency('1'); // Reset frequency
@@ -90,33 +76,36 @@ export default function HomePage() {
     }
   };
 
-  const removeUrl = async (id: number) => {
+  // Function to remove a URL
+  const removeUrl = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
       await axios.delete(`http://localhost:4000/api/removeurl/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        withCredentials: true // Important: Sends the session cookie with the request
       });
-      setUrls(urls.filter((url) => Number(url._id) !== id)); // Convert url._id to a number
+      setUrls(urls.filter((url) => url._id !== id)); // Remove the URL from the list
     } catch (error) {
       console.error('Error removing URL:', error);
       setError('Failed to remove URL');
     }
   };
 
+  if (!isClient) {
+    // Don't render anything until we're on the client
+    return null;
+  }
+
   return (
     <div className="m-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">URL Checker</h1>
         <div className="flex items-center space-x-4">
-          <span className="hidden sm:inline">{localStorage.getItem('userEmail')}</span>
+          <span className="hidden sm:inline">{userEmail}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src='/placeholder.svg?height=32&width=32' alt="User Avatar" />
-                  <AvatarFallback>{localStorage.getItem('userEmail')?.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{userEmail?.charAt(0)}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -185,7 +174,7 @@ export default function HomePage() {
                 </div>
               </TableCell>
               <TableCell>
-                <Button variant="destructive" onClick={() => removeUrl(Number(url._id))}>
+                <Button variant="destructive" onClick={() => removeUrl(url._id)}>
                   Remove
                 </Button>
               </TableCell>

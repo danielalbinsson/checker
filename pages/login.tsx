@@ -12,18 +12,19 @@ export default function Login() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission
-    setError(''); // Clear any previous errors
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     try {
-      // Make a POST request to your backend's login route
-      const response = await axios.post('http://localhost:4000/user/login', { email, password });
-      console.log('Login success:', response.data);
+      // Send login request
+      const response = await axios.post('http://localhost:4000/auth/login', { email, password }, {
+        withCredentials: true // Include credentials (session cookies) with the request
+      });
 
+      // Successful login
+      console.log('Login successful:', response.data);
+      router.push('/'); // Redirect to the home or dashboard page
 
-      // Redirect to a protected page (e.g., homepage) after successful login
-      router.push('/');
     } catch (err: any) {
       console.error('Login failed:', err.response?.data?.message);
       setError(err.response?.data?.message || 'An error occurred. Please try again.');
@@ -33,7 +34,7 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" onSubmit={handleLogin}>
         <div>
           <Label htmlFor="email">Email</Label>
           <Input 

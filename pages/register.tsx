@@ -1,21 +1,19 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
+import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import axios from 'axios';
 
-export default function Register() {
+export default function RegisterPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission
-    setError(''); // Clear any previous errors
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -23,25 +21,20 @@ export default function Register() {
     }
 
     try {
-      // Make a POST request to your backend's register route
-      const response = await axios.post('http://localhost:4000/user/register', { email, password });
-      console.log('Registration success:', response.data);
+      await axios.post('http://localhost:4000/auth/register', { email, password });
 
-      // Optionally, store the token or any session data
-      // localStorage.setItem('token', response.data.token);
-
-      // Redirect to the login page after successful registration
+      // Redirect to login page after successful registration
       router.push('/login');
-    } catch (err: any) {
-      console.error('Registration failed:', err.response?.data?.message);
-      setError(err.response?.data?.message || 'An error occurred. Please try again.');
+    } catch (err) {
+      console.error('Registration failed:', err);
+      setError('Failed to register');
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Register</h1>
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" onSubmit={handleRegister}>
         <div>
           <Label htmlFor="email">Email</Label>
           <Input 
@@ -76,8 +69,8 @@ export default function Register() {
         <Button type="submit" className="w-full">Register</Button>
       </form>
       <p className="mt-4 text-sm text-gray-500">
-        Already have an account? <Link href="/login" className="text-blue-500 hover:text-blue-600">Login</Link>
-      </p> 
+        Already have an account? <a href="/login" className="text-blue-500 hover:text-blue-600">Login</a>
+      </p>
     </div>
   );
 }

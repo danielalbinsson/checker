@@ -97,7 +97,7 @@ export default function HomePage() {
   return (
     <div className="m-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">URL Checker</h1>
+        <h1 className="text-2xl font-bold">Checker</h1>
         <div className="flex items-center space-x-4">
           <span className="hidden sm:inline">{userEmail}</span>
           <DropdownMenu>
@@ -116,34 +116,35 @@ export default function HomePage() {
           </DropdownMenu>
         </div>
       </div>
-
-      <div className="mt-4">
-        <Label htmlFor="newUrl">New URL</Label>
-        <Input 
-          id="newUrl" 
-          value={newUrl} 
-          onChange={(e) => setNewUrl(e.target.value)} 
-          placeholder="Enter URL" 
-        />
+      <div className="flex mt-8">
+        <div className="flex-grow">
+          <Label htmlFor="newUrl">New URL</Label>
+          <Input 
+            id="newUrl" 
+            value={newUrl} 
+            onChange={(e) => setNewUrl(e.target.value)} 
+            placeholder="Enter URL" 
+          />
+          </div>
         
-        <div className="w-full sm:w-48 mt-2">
-          <Label htmlFor="frequency">Check Frequency (hours)</Label>
-          <Select value={newFrequency} onValueChange={setNewFrequency}>
-            <SelectTrigger id="frequency">
-              <SelectValue placeholder="Select frequency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="12">12</SelectItem>
-              <SelectItem value="24">24</SelectItem>
-              <SelectItem value="48">48</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="">
+            <Label htmlFor="frequency">Check Frequency (hours)</Label>
+            <Select value={newFrequency} onValueChange={setNewFrequency}>
+              <SelectTrigger id="frequency">
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="12">12</SelectItem>
+                <SelectItem value="24">24</SelectItem>
+                <SelectItem value="48">48</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="flex items-end mt-4">
-          <Button className="bg-purple-800 text-white" onClick={addUrl}>Add URL</Button>
-        </div>
+          <div className="">
+            <Button className="bg-black text-white mt-6" onClick={addUrl}>Add URL</Button>
+          </div>
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -163,7 +164,7 @@ export default function HomePage() {
               <TableCell>{url.url}</TableCell>
               <TableCell>{url.frequency}</TableCell>
               <TableCell>
-                <div className="flex space-x-1">
+                {/* <div className="flex space-x-1">
                   {url.checks.map((check, index) => (
                     check ? (
                       <CheckIcon key={index} className="text-green-500 w-4 h-4" />
@@ -171,11 +172,15 @@ export default function HomePage() {
                       <XIcon key={index} className="text-red-500 w-4 h-4" />
                     )
                   ))}
-                </div>
+                </div> */}
               </TableCell>
               <TableCell>
-                <Button variant="destructive" onClick={() => removeUrl(url._id)}>
+                <Button className="bg-gray-300 m-2" variant="destructive" onClick={() => removeUrl(url._id)}>
                   Remove
+                </Button>
+
+                <Button className="bg-gray-300" variant="destructive" onClick={() => removeUrl(url._id)}>
+                  Check
                 </Button>
               </TableCell>
             </TableRow>

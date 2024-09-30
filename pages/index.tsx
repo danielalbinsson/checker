@@ -45,7 +45,7 @@ export default function HomePage() {
         });
         setUrls(response.data); // Set the URLs received from the backend
         setUserEmail(response.data.email); // Assuming the email is part of the response
-      } catch (error) {
+      } catch (error: any) { // Assert error type
         if (error.response && error.response.status === 401) {
           // If unauthorized, redirect to login
           router.push('/login');
@@ -88,6 +88,31 @@ export default function HomePage() {
       setError('Failed to remove URL');
     }
   };
+  
+    const handleLogout = async () => {
+      try {
+        await axios.post('http://localhost:4000/auth/logout', {}, {
+          withCredentials: true, // Send session cookie with the request
+        });
+        router.push('/login'); // Redirect to login page after logout
+      } catch (err) {
+        console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
+      }
+    };
+
+  const logout = async () => {
+    try {
+      // Send POST request to the logout route
+      await axios.post('http://localhost:4000/auth/logout', {}, {
+        withCredentials: true, // Send session cookie with the request
+      });
+  
+      // Redirect to login page or home page
+      router.push('/login'); // Or any other route you want
+    } catch (err: any) { // Assert 'err' as 'any'
+      console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
+    }
+  };
 
   if (!isClient) {
     // Don't render anything until we're on the client
@@ -109,9 +134,9 @@ export default function HomePage() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className='bg-white'>
               <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleLogout()}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -133,7 +158,7 @@ export default function HomePage() {
               <SelectTrigger id="frequency">
                 <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='bg-white'>
                 <SelectItem value="1">1</SelectItem>
                 <SelectItem value="12">12</SelectItem>
                 <SelectItem value="24">24</SelectItem>

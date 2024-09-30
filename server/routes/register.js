@@ -1,4 +1,4 @@
-const handleRegister = async (e: React.FormEvent) => {
+const handleRegister = async (e) => {
   e.preventDefault();
 
   if (password !== confirmPassword) {

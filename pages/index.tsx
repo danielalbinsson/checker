@@ -88,6 +88,18 @@ export default function HomePage() {
       setError('Failed to remove URL');
     }
   };
+
+  const checkUrl = async (url: string) => {
+    try {
+      const response = await axios.post('http://localhost:4000/api/checkurl', { url }, {
+        withCredentials: true, // Include credentials if session authentication is needed
+      });
+      console.log('URL Check Successful:', response.data.message);
+      // You can also handle the response here (e.g., display the status in the UI)
+    } catch (error: any) {
+      console.error('Error checking URL:', error.response?.data?.message || error.message);
+    }
+  };
   
     const handleLogout = async () => {
       try {
@@ -190,7 +202,7 @@ export default function HomePage() {
                   Remove
                 </Button>
  
-                <Button className="bg-gray-100 text-black hover:bg-gray-400" variant="outline" onClick={() => removeUrl(url._id)}>
+                <Button className="bg-gray-100 text-black hover:bg-gray-400"  onClick={() => checkUrl(url.url)}>
                   Check
                 </Button>
               </TableCell>

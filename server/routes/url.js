@@ -7,23 +7,31 @@ const authenticate = require('../middleware/authenticate'); // Import the authen
 // Add a new URL (protected route)
 router.post('/addurl', authenticate, [
   body('url').isURL().withMessage('Enter a valid URL'),
+  body('frequency').isNumeric().withMessage('Frequency must be a number'),
 ], async (req, res) => {
-  console.log('Add URL request body:', req.body);
+  console.log('Add URL request body:', req.body); // Check request body in logs
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    const { url } = req.body;
-    const newUrl = new Url({ user: req.user._id, url });
+    const { url, frequency } = req.body;
+    const newUrl = new Url({ 
+      user: req.user._id, 
+      url, 
+      frequency, 
+    });
+
     await newUrl.save();
+    console.log('Saved URL:', newUrl); // Log saved document
     res.status(201).json({ message: 'URL added successfully', url: newUrl });
   } catch (error) {
     console.error('Error adding URL:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // Remove a URL (protected route)
 router.delete('/removeurl/:id', authenticate, async (req, res) => {

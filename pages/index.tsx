@@ -95,24 +95,10 @@ export default function HomePage() {
           withCredentials: true, // Send session cookie with the request
         });
         router.push('/login'); // Redirect to login page after logout
-      } catch (err) {
+      } catch (err: any) { // Assert 'err' as 'any'
         console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
       }
     };
-
-  const logout = async () => {
-    try {
-      // Send POST request to the logout route
-      await axios.post('http://localhost:4000/auth/logout', {}, {
-        withCredentials: true, // Send session cookie with the request
-      });
-  
-      // Redirect to login page or home page
-      router.push('/login'); // Or any other route you want
-    } catch (err: any) { // Assert 'err' as 'any'
-      console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
-    }
-  };
 
   if (!isClient) {
     // Don't render anything until we're on the client
@@ -200,11 +186,11 @@ export default function HomePage() {
                 </div> */}
               </TableCell>
               <TableCell>
-                <Button className="bg-gray-300 m-2" variant="destructive" onClick={() => removeUrl(url._id)}>
+                <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2" variant="destructive" onClick={() => removeUrl(url._id)}>
                   Remove
                 </Button>
-
-                <Button className="bg-gray-300" variant="destructive" onClick={() => removeUrl(url._id)}>
+ 
+                <Button className="bg-gray-100 text-black hover:bg-gray-400" variant="outline" onClick={() => removeUrl(url._id)}>
                   Check
                 </Button>
               </TableCell>

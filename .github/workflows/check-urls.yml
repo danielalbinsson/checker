@@ -1,0 +1,16 @@
+name: Trigger URL Checks
+
+# Schedule the action to run every 5 minutes using cron syntax
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+
+jobs:
+  trigger-url-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Use curl to trigger the Vercel serverless function
+      - name: Call Vercel Serverless Function
+        run: |
+          curl -X GET https://your-vercel-app.vercel.app/api/check-urls

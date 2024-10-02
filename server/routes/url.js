@@ -61,7 +61,7 @@ router.get('/geturls', authenticate, async (req, res) => {
   }
 });
 
-// Helper function to ensure the URL has a protocol
+// Helper function to normalize URLs by adding the protocol if missing
 const normalizeUrl = (url) => {
   if (!/^https?:\/\//i.test(url)) {
     return 'http://' + url;
@@ -77,43 +77,68 @@ router.post('/checkurl', authenticate, async (req, res) => {
     return res.status(400).json({ message: 'URL is required' });
   }
 
-  const normalizedUrl = normalizeUrl(url);  // Ensure the URL has the protocol
+  const normalizedUrl = normalizeUrl(url);
   console.log(`Checking URL: ${normalizedUrl}`);
   
   try {
     // Use a HEAD request to check if the URL is reachable
     const response = await axios.head(normalizedUrl);
-    console.log('Response status:', response.status);
-    
-    // Send back the status to the frontend
+    console.log('Response status:', response.status);  // Log the status code
+
+    // Save the successful check in the database
+    const urlDoc = await Url.findOneAndUpdate(
+      { url: normalizedUrl, user: req.user._id },  // Match URL and user
+      { 
+        $push: { checks: { statusCode: response.status, checkedAt: new Date() } }  // Add new check
+      },
+      { new: true, upsert: true }  // Return the updated document, create if not found
+    );
+
+    console.log('Updated URL document:', urlDoc);  // Log the updated document
+
     res.status(200).json({
       url: normalizedUrl,
       status: response.status,
       headers: response.headers,
       message: 'URL is reachable',
+      checks: urlDoc.checks  // Return the updated checks array
     });
   } catch (error) {
     console.error('Error checking URL:', error.message);
-    
-    if (error.response) {
-      // URL returned an error response (e.g., 404, 500)
-      return res.status(error.response.status).json({
+
+    // Handle specific errors (e.g., ENOTFOUND) and save failed check
+    let statusCode = 500;  // Default to 500 for unknown errors
+    let errorMessage = error.message;
+
+    if (error.code === 'ENOTFOUND') {
+      statusCode = 404;  // Set a 404 error code for DNS resolution issues
+      errorMessage = 'Domain not found';
+    } else if (error.response) {
+      statusCode = error.response.status;  // Set the status code if available from the response
+      errorMessage = `URL returned error: ${error.response.statusText}`;
+    }
+
+    // Save the failed check to the database
+    try {
+      const urlDoc = await Url.findOneAndUpdate(
+        { url: normalizedUrl, user: req.user._id },
+        { 
+          $push: { checks: { statusCode, checkedAt: new Date(), errorMessage } }  // Save failed check
+        },
+        { new: true, upsert: true }
+      );
+
+      console.log('Updated URL document with failed check:', urlDoc);
+
+      res.status(statusCode).json({
         url: normalizedUrl,
-        status: error.response.status,
-        message: `URL returned error: ${error.response.statusText}`,
+        status: statusCode,
+        message: errorMessage,
+        checks: urlDoc.checks
       });
-    } else if (error.request) {
-      // The request was made but no response was received
-      return res.status(500).json({
-        url: normalizedUrl,
-        message: 'No response from the server. The URL might be down.',
-      });
-    } else {
-      // Some other error (e.g., malformed URL)
-      return res.status(500).json({
-        message: 'An error occurred while checking the URL',
-        error: error.message,
-      });
+    } catch (dbError) {
+      console.error('Database update error:', dbError);
+      res.status(500).json({ message: 'Failed to update the database with the check' });
     }
   }
 });

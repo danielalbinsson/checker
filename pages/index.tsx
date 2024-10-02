@@ -182,20 +182,26 @@ export default function HomePage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {urls.map((url: Url) => (
+        {urls.map((url: Url) => (
             <TableRow key={url._id}>
               <TableCell>{url.url}</TableCell>
               <TableCell>{url.frequency}</TableCell>
               <TableCell>
-                {/* <div className="flex space-x-1">
-                  {url.checks.map((check, index) => (
-                    check ? (
-                      <CheckIcon key={index} className="text-green-500 w-4 h-4" />
-                    ) : (
-                      <XIcon key={index} className="text-red-500 w-4 h-4" />
-                    )
-                  ))}
-                </div> */}
+                {/* Check if 'checks' exists and is an array before mapping over it */}
+                {(url.checks && url.checks.length > 0) ? (
+                  url.checks.map((check) => (
+                    <div key={check.checkedAt} style={{ display: 'inline-block', marginRight: '10px' }}>
+                      {/* Conditionally render CheckIcon or XIcon based on statusCode */}
+                      {check.statusCode >= 200 && check.statusCode < 300 ? (
+                        <CheckIcon style={{ color: 'green' }} />  // Green checkmark for success
+                      ) : (
+                        <XIcon style={{ color: 'red' }} />  // Red cross for failure
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <span></span>
+                )}
               </TableCell>
               <TableCell>
                 <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2" variant="destructive" onClick={() => removeUrl(url._id)}>

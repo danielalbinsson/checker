@@ -3,6 +3,11 @@ import { MongoClient } from 'mongodb';
 import axios from 'axios';
 
 const uri = process.env.MONGODB_URI;
+
+if (!uri) {
+  throw new Error('MONGODB_URI is not defined in the environment variables');
+}
+
 const client = new MongoClient(uri);
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {

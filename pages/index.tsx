@@ -26,38 +26,33 @@ export default function HomePage() {
   const [newUrl, setNewUrl] = useState('');
   const [newFrequency, setNewFrequency] = useState('1');
   const [error, setError] = useState('');
-  const [isClient, setIsClient] = useState(false); // State to track if we are on the client
   const [userEmail, setUserEmail] = useState<string | null>(null); // Store the user email
 
-  // Check if we're on the client-side
-  useEffect(() => {
-    setIsClient(true); 
-  }, []);
 
-  // Fetch URLs from the backend after checking authentication
-  useEffect(() => {
-    if (!isClient) return; // Only proceed if we are on the client side
-
-    const fetchUrls = async () => {
-      try {
-        const response = await axios.get('http://localhost:4000/api/geturls', {
-          withCredentials: true // Important: Sends the session cookie with the request
-        });
-        setUrls(response.data); // Set the URLs received from the backend
-        setUserEmail(response.data.email); // Assuming the email is part of the response
-      } catch (error: any) { // Assert error type
-        if (error.response && error.response.status === 401) {
-          // If unauthorized, redirect to login
-          router.push('/login');
-        } else {
-          console.error('Error fetching URLs:', error);
-          setError('Failed to fetch URLs');
-        }
+// Fetch URLs from the backend after checking authentication
+useEffect(() => {
+  const fetchUrls = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/api/geturls', {
+        withCredentials: true // Important: Sends the session cookie with the request
+      });
+      setUrls(response.data); // Set the URLs received from the backend
+      setUserEmail(response.data.email); // Assuming the email is part of the response
+    } catch (error: any) { // Assert error type
+      if (error.response && error.response.status === 401) {
+        // If unauthorized, redirect to login
+        router.push('/login');
+      } else {
+        console.error('Error fetching URLs:', error);
+        setError('Failed to fetch URLs');
       }
-    };
+    }
+  };
 
-    fetchUrls();
-  }, [isClient, router]);
+  fetchUrls(); // Call the function directly
+
+}, [router]); // Use router as the dependency instead of isClient
+
 
   // Function to add a new URL
   const addUrl = async () => {
@@ -111,11 +106,8 @@ export default function HomePage() {
         console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
       }
     };
+  
 
-  if (!isClient) {
-    // Don't render anything until we're on the client
-    return null;
-  }
 
   return (
     <div className="m-8">
@@ -182,39 +174,44 @@ export default function HomePage() {
           </TableRow>
         </TableHeader>
         <TableBody className="text-black text-sm">
-        {urls.map((url: Url) => (
-            <TableRow key={url._id}>
-              <TableCell>{url.url}</TableCell>
-              <TableCell>{url.frequency}</TableCell>
-              <TableCell>
-              {url.checks.map((check) => (
-                <div key={check.checkedAt} className="inline-block mr-2">
-                  {check.statusCode >= 200 && check.statusCode < 300 ? (
-                    <div>
-                      <CircleCheck className="w-6 h-6 text-green-700" />
-                    </div>
-                  ) : (
-                    <div>
-                      <CircleX className="w-6 h-6 text-red-600" />
-                    </div>
-                  )}
+  {urls.map((url: Url) => (
+    <TableRow key={url._id}>
+      <TableCell>{url.url}</TableCell>
+      <TableCell>{url.frequency}</TableCell>
+      <TableCell>
+        {url.checks && url.checks.length > 0 ? (
+          url.checks.map((check: any) => (
+            <div key={check.checkedAt} className="inline-block mr-2">
+              {check.statusCode >= 200 && check.statusCode < 300 ? (
+                <div>
+                  <CircleCheck className="w-6 h-6 text-green-700" />
                 </div>
-              ))}
-              </TableCell>
-              <TableCell>
-                <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8" variant="destructive" onClick={() => removeUrl(url._id)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                  Remove
-                </Button>
- 
-                <Button className="bg-gray-100 text-black hover:bg-gray-400 h-8"  onClick={() => checkUrl(url.url)}>
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                  Check
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+              ) : (
+                <div>
+                  <CircleX className="w-6 h-6 text-red-600" />
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <span>No checks available</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8" variant="destructive" onClick={() => removeUrl(url._id)}>
+          <Trash2 className="mr-2 h-4 w-4" />
+          Remove
+        </Button>
+
+        <Button className="bg-gray-100 text-black hover:bg-gray-400 h-8" onClick={() => checkUrl(url.url)}>
+          <RefreshCcw className="mr-2 h-4 w-4" />
+          Check
+        </Button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
       </Table>
     </div>
   );

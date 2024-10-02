@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -69,7 +70,7 @@ export default function RegisterPage() {
         <Button type="submit" className="w-full">Register</Button>
       </form>
       <p className="mt-4 text-sm text-gray-500">
-        Already have an account? <a href="/login" className="text-blue-500 hover:text-blue-600">Login</a>
+        Already have an account? <Link href={"/login"} className="text-blue-500 hover:text-blue-600">Login</Link>
       </p>
     </div>
   );

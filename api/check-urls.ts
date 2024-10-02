@@ -1,13 +1,16 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { IncomingMessage, ServerResponse } from 'http'; // Standard Node.js types
 import { MongoClient } from 'mongodb';
 import axios from 'axios';
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    res.statusCode = 405;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ message: 'Method not allowed' }));
+    return;
   }
 
   try {
@@ -26,9 +29,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    res.status(200).json({ message: 'URL checks completed' });
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ message: 'URL checks completed' }));
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: 'Internal Server Error' }));
   } finally {
     await client.close();
   }

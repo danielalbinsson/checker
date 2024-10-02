@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckIcon, XIcon } from 'lucide-react';
+import { CircleCheck, CircleX, RefreshCcw, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -172,43 +172,43 @@ export default function HomePage() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <Table className="mt-4">
+      <Table className="mt-4 text-gray-500 text-xs">
         <TableHeader>
           <TableRow>
             <TableHead>URL</TableHead>
-            <TableHead>Frequency (hours)</TableHead>
+            <TableHead>Frequency</TableHead>
             <TableHead>Check History</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody className="text-black text-sm">
         {urls.map((url: Url) => (
             <TableRow key={url._id}>
               <TableCell>{url.url}</TableCell>
               <TableCell>{url.frequency}</TableCell>
               <TableCell>
-                {/* Check if 'checks' exists and is an array before mapping over it */}
-                {(url.checks && url.checks.length > 0) ? (
-                  url.checks.map((check) => (
-                    <div key={check.checkedAt} style={{ display: 'inline-block', marginRight: '10px' }}>
-                      {/* Conditionally render CheckIcon or XIcon based on statusCode */}
-                      {check.statusCode >= 200 && check.statusCode < 300 ? (
-                        <CheckIcon style={{ color: 'green' }} />  // Green checkmark for success
-                      ) : (
-                        <XIcon style={{ color: 'red' }} />  // Red cross for failure
-                      )}
+              {url.checks.map((check) => (
+                <div key={check.checkedAt} className="inline-block mr-2">
+                  {check.statusCode >= 200 && check.statusCode < 300 ? (
+                    <div>
+                      <CircleCheck className="w-6 h-6 text-green-700" />
                     </div>
-                  ))
-                ) : (
-                  <span></span>
-                )}
+                  ) : (
+                    <div>
+                      <CircleX className="w-6 h-6 text-red-600" />
+                    </div>
+                  )}
+                </div>
+              ))}
               </TableCell>
               <TableCell>
-                <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2" variant="destructive" onClick={() => removeUrl(url._id)}>
+                <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8" variant="destructive" onClick={() => removeUrl(url._id)}>
+                <Trash2 className="mr-2 h-4 w-4" />
                   Remove
                 </Button>
  
-                <Button className="bg-gray-100 text-black hover:bg-gray-400"  onClick={() => checkUrl(url.url)}>
+                <Button className="bg-gray-100 text-black hover:bg-gray-400 h-8"  onClick={() => checkUrl(url.url)}>
+                <RefreshCcw className="mr-2 h-4 w-4" />
                   Check
                 </Button>
               </TableCell>

@@ -3,16 +3,34 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Toaster } from "@/components/ui/toaster";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 import { CircleCheck, CircleX, RefreshCcw, Trash2 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface CheckResult {
   statusCode: number;
@@ -36,45 +54,37 @@ export default function HomePage() {
   const [newUrl, setNewUrl] = useState('');
   const [newFrequency, setNewFrequency] = useState('1');
   const [error, setError] = useState('');
-  const [userEmail, setUserEmail] = useState<string | null>(null); // Store the user email
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const { toast } = useToast();
+  const [loadingUrlId, setLoadingUrlId] = useState<string | null>(null);
 
-// Fetch URLs from the backend after checking authentication
-useEffect(() => {
-  const fetchUrls = async () => {
-    try {
-      const response = await axios.get('http://localhost:4000/api/geturls', {
-        withCredentials: true, // Sends the session cookie with the request
-      });
-      console.log('Backend response:', response.data);
+  useEffect(() => {
+    const fetchUrls = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/api/geturls', {
+          withCredentials: true,
+        });
+        console.log('Backend response:', response.data);
 
-      // Since response.data is an array of URLs
-      setUrls(
-        response.data.map((url: Url) => ({
-          ...url,
-          checks: url.checks || [],
-        }))
-      );
-
-      // If the user email is part of the response, set it accordingly
-      // For example, if response.data includes email:
-      // setUserEmail(response.data.email || null);
-    } catch (error: any) {
-      if (error.response && error.response.status === 401) {
-        // If unauthorized, redirect to login
-        router.push('/login');
-      } else {
-        console.error('Error fetching URLs:', error);
-        setError('Failed to fetch URLs');
+        setUrls(
+          response.data.map((url: Url) => ({
+            ...url,
+            checks: url.checks || [],
+          }))
+        );
+      } catch (error: any) {
+        if (error.response && error.response.status === 401) {
+          router.push('/login');
+        } else {
+          console.error('Error fetching URLs:', error);
+          setError('Failed to fetch URLs');
+        }
       }
-    }
-  };
+    };
 
-  fetchUrls(); // Call the function directly
-}, [router]);
+    fetchUrls();
+  }, [router]);
 
-
-  // Function to add a new URL
   const addUrl = async () => {
     toast({
       title: 'Adding URL',
@@ -87,8 +97,10 @@ useEffect(() => {
           { url: newUrl, frequency: newFrequency },
           { withCredentials: true }
         );
-        const newUrlData: Url = response.data.url;
-  
+        const newUrlData: Url = {
+          ...response.data.url,
+          checks: response.data.url.checks || [],
+        };
         setUrls((prevUrls) => [...prevUrls, newUrlData]);
         setNewUrl('');
         setNewFrequency('1');
@@ -98,19 +110,17 @@ useEffect(() => {
       }
     }
   };
-  
 
-  // Function to remove a URL
   const removeUrl = async (id: string) => {
     toast({
-      title: `Removing ${id}`,
-      description: "...",
+      title: 'Removing URL',
+      description: 'Please wait...',
     });
     try {
       await axios.delete(`http://localhost:4000/api/removeurl/${id}`, {
-        withCredentials: true // Important: Sends the session cookie with the request
+        withCredentials: true,
       });
-      setUrls(urls.filter((url) => url._id !== id)); // Remove the URL from the list
+      setUrls((prevUrls) => prevUrls.filter((url) => url._id !== id));
     } catch (error) {
       console.error('Error removing URL:', error);
       setError('Failed to remove URL');
@@ -118,24 +128,21 @@ useEffect(() => {
   };
 
   const checkUrl = async (urlToCheck: string, urlId: string) => {
+    setLoadingUrlId(urlId);
     toast({
       title: `Checking ${urlToCheck}`,
-      description: "Please wait...",
+      description: 'Please wait...',
     });
     try {
       const response = await axios.post(
         'http://localhost:4000/api/checkurl',
         { url: urlToCheck },
-        {
-          withCredentials: true, // Include credentials if session authentication is needed
-        }
+        { withCredentials: true }
       );
       console.log('URL Check Successful:', response.data);
   
-      // Assuming response.data is the new check result
       const newCheck: CheckResult = response.data;
   
-      // Update the specific URL's checks with the new result
       setUrls((prevUrls) =>
         prevUrls.map((url) => {
           if (url._id === urlId) {
@@ -145,22 +152,35 @@ useEffect(() => {
         })
       );
     } catch (error: any) {
-      console.error('Error checking URL:', error.response?.data?.message || error.message);
+      console.error(
+        'Error checking URL:',
+        error.response?.data?.message || error.message
+      );
+      toast({
+        title: 'Error',
+        description: 'Failed to check the URL. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingUrlId(null);
     }
   };
   
-  
-  
-    const handleLogout = async () => {
-      try {
-        await axios.post('http://localhost:4000/auth/logout', {}, {
-          withCredentials: true, // Send session cookie with the request
-        });
-        router.push('/login'); // Redirect to login page after logout
-      } catch (err: any) { // Assert 'err' as 'any'
-        console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
-      }
-    };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        'http://localhost:4000/auth/logout',
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+      router.push('/login');
+    } catch (err: any) {
+      console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
+    }
+  };
   
 
 
@@ -235,20 +255,48 @@ useEffect(() => {
         <TableCell>{url.url}</TableCell>
         <TableCell>{url.frequency}</TableCell>
         <TableCell>
-          {url.checks && url.checks.length > 0 ? (
-            url.checks.map((check, index) => (
-              <div key={index} className="inline-block mr-2">
-                {check.statusCode >= 200 && check.statusCode < 300 ? (
-                  <CircleCheck className="w-6 h-6 text-green-700" />
-                ) : (
-                  <CircleX className="w-6 h-6 text-red-600" />
-                )}
-              </div>
-            ))
+  {loadingUrlId === url._id ? (
+    // Display a loading indicator
+    <div className="inline-block mr-2">
+      {/* Loading spinner */}
+      <svg
+        className="animate-spin h-6 w-6 text-gray-500"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        ></circle>
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8H4z"
+        ></path>
+      </svg>
+    </div>
+  ) : url.checks && url.checks.length > 0 ? (
+    url.checks
+      .filter((check) => check.statusCode !== undefined && check.statusCode !== null)
+      .map((check, index) => (
+        <div key={index} className="inline-block mr-2">
+          {check.statusCode >= 200 && check.statusCode < 300 ? (
+            <CircleCheck className="w-6 h-6 text-green-700" />
           ) : (
-            <span>No checks available</span>
+            <CircleX className="w-6 h-6 text-red-600" />
           )}
-        </TableCell>
+        </div>
+      ))
+  ) : (
+    <span>No checks available</span>
+  )}
+</TableCell>
+
         <TableCell>
           <Button
             className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8"

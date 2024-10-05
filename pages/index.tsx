@@ -14,12 +14,20 @@ import { CircleCheck, CircleX, RefreshCcw, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-// Define the URL type
+interface CheckResult {
+  statusCode: number;
+  checkedAt: string;
+  _id: string;
+}
+
 interface Url {
   _id: string;
   url: string;
   frequency: number;
-  checks: boolean[]; // Add this line to define 'checks' as an array of booleans
+  checks: CheckResult[];
+  dateAdded: string;
+  user: string;
+  __v: number;
 }
 
 export default function HomePage() {
@@ -36,11 +44,22 @@ useEffect(() => {
   const fetchUrls = async () => {
     try {
       const response = await axios.get('http://localhost:4000/api/geturls', {
-        withCredentials: true // Important: Sends the session cookie with the request
+        withCredentials: true, // Sends the session cookie with the request
       });
-      setUrls(response.data); // Set the URLs received from the backend
-      setUserEmail(response.data.email); // Assuming the email is part of the response
-    } catch (error: any) { // Assert error type
+      console.log('Backend response:', response.data);
+
+      // Since response.data is an array of URLs
+      setUrls(
+        response.data.map((url: Url) => ({
+          ...url,
+          checks: url.checks || [],
+        }))
+      );
+
+      // If the user email is part of the response, set it accordingly
+      // For example, if response.data includes email:
+      // setUserEmail(response.data.email || null);
+    } catch (error: any) {
       if (error.response && error.response.status === 401) {
         // If unauthorized, redirect to login
         router.push('/login');
@@ -52,30 +71,34 @@ useEffect(() => {
   };
 
   fetchUrls(); // Call the function directly
-
-}, [router]); // Use router as the dependency instead of isClient
+}, [router]);
 
 
   // Function to add a new URL
   const addUrl = async () => {
     toast({
-      title: `Adding url`,
-      description: "Please wait...",
+      title: 'Adding URL',
+      description: 'Please wait...',
     });
     if (newUrl) {
       try {
-        const response = await axios.post('http://localhost:4000/api/addurl', 
-        { url: newUrl, frequency: newFrequency }, 
-        { withCredentials: true }); // Important: Sends the session cookie with the request
-        setUrls([...urls, response.data.url]); // Add the new URL to the list
-        setNewUrl(''); // Clear the input
-        setNewFrequency('1'); // Reset frequency
+        const response = await axios.post(
+          'http://localhost:4000/api/addurl',
+          { url: newUrl, frequency: newFrequency },
+          { withCredentials: true }
+        );
+        const newUrlData: Url = response.data.url;
+  
+        setUrls((prevUrls) => [...prevUrls, newUrlData]);
+        setNewUrl('');
+        setNewFrequency('1');
       } catch (error) {
         console.error('Error adding URL:', error);
         setError('Failed to add URL');
       }
     }
   };
+  
 
   // Function to remove a URL
   const removeUrl = async (id: string) => {
@@ -100,21 +123,33 @@ useEffect(() => {
       description: "Please wait...",
     });
     try {
-      const response = await axios.post('http://localhost:4000/api/checkurl', { url: urlToCheck }, {
-        withCredentials: true, // Include credentials if session authentication is needed
-      });
-      console.log('URL Check Successful:', response.data.message);
-      // Update the specific URL's checks with the new result
-      setUrls(urls.map(url => {
-        if (url._id === urlId) {
-          return { ...url, checks: [...url.checks, response.data.check] }; // Assuming response.data.check is the new check result
+      const response = await axios.post(
+        'http://localhost:4000/api/checkurl',
+        { url: urlToCheck },
+        {
+          withCredentials: true, // Include credentials if session authentication is needed
         }
-        return url;
-      }));
+      );
+      console.log('URL Check Successful:', response.data);
+  
+      // Assuming response.data is the new check result
+      const newCheck: CheckResult = response.data;
+  
+      // Update the specific URL's checks with the new result
+      setUrls((prevUrls) =>
+        prevUrls.map((url) => {
+          if (url._id === urlId) {
+            return { ...url, checks: [...(url.checks || []), newCheck] };
+          }
+          return url;
+        })
+      );
     } catch (error: any) {
       console.error('Error checking URL:', error.response?.data?.message || error.message);
     }
   };
+  
+  
   
     const handleLogout = async () => {
       try {
@@ -194,40 +229,53 @@ useEffect(() => {
           </TableRow>
         </TableHeader>
         <TableBody className="text-black text-sm">
-      {urls.map((url: Url) => (
-        <TableRow key={url._id}>
-      <TableCell>{url.url}</TableCell>
-      <TableCell>{url.frequency}</TableCell>
-      <TableCell>
-        {url.checks && url.checks.length > 0 ? (
-          url.checks.map((check, index) => (
-            <div key={index} className="inline-block mr-2">
-              {/* Check if 'check' is an object and has a 'statusCode' property */}
-              {check && typeof check === 'object' && 'statusCode' in check && check.statusCode >= 200 && check.statusCode < 300 ? (
-                <CircleCheck className="w-6 h-6 text-green-700" />
-              ) : (
-                <CircleX className="w-6 h-6 text-red-600" />
-              )}
-            </div>
-          ))
-        ) : (
-          <span>No checks available</span>
-        )}
-      </TableCell>
-      <TableCell>
-      <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8" variant="destructive" onClick={() => removeUrl(url._id)}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Remove
-            </Button>
+  {urls.length > 0 ? (
+    urls.map((url: Url) => (
+      <TableRow key={url._id}>
+        <TableCell>{url.url}</TableCell>
+        <TableCell>{url.frequency}</TableCell>
+        <TableCell>
+          {url.checks && url.checks.length > 0 ? (
+            url.checks.map((check, index) => (
+              <div key={index} className="inline-block mr-2">
+                {check.statusCode >= 200 && check.statusCode < 300 ? (
+                  <CircleCheck className="w-6 h-6 text-green-700" />
+                ) : (
+                  <CircleX className="w-6 h-6 text-red-600" />
+                )}
+              </div>
+            ))
+          ) : (
+            <span>No checks available</span>
+          )}
+        </TableCell>
+        <TableCell>
+          <Button
+            className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8"
+            variant="destructive"
+            onClick={() => removeUrl(url._id)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Remove
+          </Button>
 
-            <Button className="bg-gray-100 text-black hover:bg-gray-400 h-8" onClick={() => checkUrl(url.url, url._id)}>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Check
-            </Button>
-      </TableCell>
+          <Button
+            className="bg-gray-100 text-black hover:bg-gray-400 h-8"
+            onClick={() => checkUrl(url.url, url._id)}
+          >
+            <RefreshCcw className="mr-2 h-4 w-4" />
+            Check
+          </Button>
+        </TableCell>
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={4}>No URLs available</TableCell>
     </TableRow>
-  ))}
+  )}
 </TableBody>
+
 
       </Table>
       <Toaster />

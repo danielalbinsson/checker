@@ -6,8 +6,10 @@ import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Toaster } from "@/components/ui/toaster";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 import { CircleCheck, CircleX, RefreshCcw, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -27,7 +29,7 @@ export default function HomePage() {
   const [newFrequency, setNewFrequency] = useState('1');
   const [error, setError] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null); // Store the user email
-
+  const { toast } = useToast();
 
 // Fetch URLs from the backend after checking authentication
 useEffect(() => {
@@ -56,6 +58,10 @@ useEffect(() => {
 
   // Function to add a new URL
   const addUrl = async () => {
+    toast({
+      title: `Adding url`,
+      description: "Please wait...",
+    });
     if (newUrl) {
       try {
         const response = await axios.post('http://localhost:4000/api/addurl', 
@@ -73,6 +79,10 @@ useEffect(() => {
 
   // Function to remove a URL
   const removeUrl = async (id: string) => {
+    toast({
+      title: `Removing ${id}`,
+      description: "...",
+    });
     try {
       await axios.delete(`http://localhost:4000/api/removeurl/${id}`, {
         withCredentials: true // Important: Sends the session cookie with the request
@@ -84,13 +94,23 @@ useEffect(() => {
     }
   };
 
-  const checkUrl = async (url: string) => {
+  const checkUrl = async (urlToCheck: string, urlId: string) => {
+    toast({
+      title: `Checking ${urlToCheck}`,
+      description: "Please wait...",
+    });
     try {
-      const response = await axios.post('http://localhost:4000/api/checkurl', { url }, {
+      const response = await axios.post('http://localhost:4000/api/checkurl', { url: urlToCheck }, {
         withCredentials: true, // Include credentials if session authentication is needed
       });
       console.log('URL Check Successful:', response.data.message);
-      // You can also handle the response here (e.g., display the status in the UI)
+      // Update the specific URL's checks with the new result
+      setUrls(urls.map(url => {
+        if (url._id === urlId) {
+          return { ...url, checks: [...url.checks, response.data.check] }; // Assuming response.data.check is the new check result
+        }
+        return url;
+      }));
     } catch (error: any) {
       console.error('Error checking URL:', error.response?.data?.message || error.message);
     }
@@ -174,22 +194,19 @@ useEffect(() => {
           </TableRow>
         </TableHeader>
         <TableBody className="text-black text-sm">
-  {urls.map((url: Url) => (
-    <TableRow key={url._id}>
+      {urls.map((url: Url) => (
+        <TableRow key={url._id}>
       <TableCell>{url.url}</TableCell>
       <TableCell>{url.frequency}</TableCell>
       <TableCell>
         {url.checks && url.checks.length > 0 ? (
-          url.checks.map((check: any) => (
-            <div key={check.checkedAt} className="inline-block mr-2">
-              {check.statusCode >= 200 && check.statusCode < 300 ? (
-                <div>
-                  <CircleCheck className="w-6 h-6 text-green-700" />
-                </div>
+          url.checks.map((check, index) => (
+            <div key={index} className="inline-block mr-2">
+              {/* Check if 'check' is an object and has a 'statusCode' property */}
+              {check && typeof check === 'object' && 'statusCode' in check && check.statusCode >= 200 && check.statusCode < 300 ? (
+                <CircleCheck className="w-6 h-6 text-green-700" />
               ) : (
-                <div>
-                  <CircleX className="w-6 h-6 text-red-600" />
-                </div>
+                <CircleX className="w-6 h-6 text-red-600" />
               )}
             </div>
           ))
@@ -198,21 +215,22 @@ useEffect(() => {
         )}
       </TableCell>
       <TableCell>
-        <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8" variant="destructive" onClick={() => removeUrl(url._id)}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Remove
-        </Button>
+      <Button className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8" variant="destructive" onClick={() => removeUrl(url._id)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remove
+            </Button>
 
-        <Button className="bg-gray-100 text-black hover:bg-gray-400 h-8" onClick={() => checkUrl(url.url)}>
-          <RefreshCcw className="mr-2 h-4 w-4" />
-          Check
-        </Button>
+            <Button className="bg-gray-100 text-black hover:bg-gray-400 h-8" onClick={() => checkUrl(url.url, url._id)}>
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              Check
+            </Button>
       </TableCell>
     </TableRow>
   ))}
 </TableBody>
 
       </Table>
+      <Toaster />
     </div>
   );
 }

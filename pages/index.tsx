@@ -84,7 +84,7 @@ export default function HomePage() {
     };
 
     fetchUrls();
-  }, []); // Removed 'router' from dependencies
+  }, []);
 
   const addUrl = async () => {
     toast({
@@ -98,7 +98,6 @@ export default function HomePage() {
           { url: newUrl, frequency: newFrequency },
           { withCredentials: true }
         );
-        // Fetch updated URLs after adding a new URL
         await fetchUrls();
         setNewUrl('');
         setNewFrequency('1');
@@ -118,7 +117,6 @@ export default function HomePage() {
       await axios.delete(`http://localhost:4000/api/removeurl/${id}`, {
         withCredentials: true,
       });
-      // Fetch updated URLs after removing a URL
       await fetchUrls();
     } catch (error) {
       console.error('Error removing URL:', error);
@@ -182,149 +180,140 @@ export default function HomePage() {
     }
   };
 
- 
   return (
-    <div className="mx-8">
-      <div className="flex justify-between items-center h-16  border-b p-4">
-        <h1 className="text-2xl font-bold">Checker</h1>
-        <div className="flex items-center space-x-4">
-          <span className="hidden sm:inline">{userEmail}</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src='/placeholder.svg?height=32&width=32' alt="User Avatar" />
-                  <AvatarFallback>{userEmail?.charAt(0)}</AvatarFallback>
-                </Avatar>
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-teal-500 to-gray-500">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-extrabold text-white tracking-tight">
+            Website Monitor
+          </h1>
+          <div className="flex items-center space-x-4">
+            <span className="hidden sm:inline text-white">{userEmail}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full bg-white/10 hover:bg-white/20">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src='/placeholder.svg?height=36&width=36' alt="User Avatar" />
+                    <AvatarFallback>{userEmail?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white/90 backdrop-blur-sm">
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleLogout()}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div className="bg-white/30 backdrop-blur-md rounded-lg p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="col-span-1 md:col-span-2">
+              <Label htmlFor="newUrl" className="text-white font-semibold mb-2">New URL</Label>
+              <Input 
+                id="newUrl" 
+                value={newUrl} 
+                onChange={(e) => setNewUrl(e.target.value)} 
+                placeholder="Enter URL" 
+                className="bg-white/50 placeholder-gray-500"
+              />
+            </div>
+            <div>
+              <Label htmlFor="frequency" className="text-white font-semibold mb-2">Check Frequency (hours)</Label>
+              <Select value={newFrequency} onValueChange={setNewFrequency}>
+                <SelectTrigger id="frequency" className="bg-white/50">
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="12">12</SelectItem>
+                  <SelectItem value="24">24</SelectItem>
+                  <SelectItem value="48">48</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out" 
+                onClick={addUrl}
+              >
+                Add URL
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className='bg-white'>
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleLogout()}>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </div>
+          </div>
+        </div>
+
+        {error && <p className="text-red-200 text-sm mb-4">{error}</p>}
+
+        <div className="bg-white/80 backdrop-blur-md rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-100/50">
+                <TableHead className="w-[200px] font-bold text-gray-700">URL</TableHead>
+                <TableHead className="font-bold text-gray-700">Frequency</TableHead>
+                <TableHead className="font-bold text-gray-700">Check History</TableHead>
+                <TableHead className="font-bold text-gray-700">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {urls.length > 0 ? (
+                urls.map((url: Url) => (
+                  <TableRow key={url._id} className="hover:bg-gray-100/50 transition-colors duration-200">
+                    <TableCell className="font-medium">{url.url}</TableCell>
+                    <TableCell>{url.frequency}</TableCell>
+                    <TableCell>
+                      {loadingUrlId === url._id ? (
+                        <div className="inline-block mr-2">
+                          <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                          </svg>
+                        </div>
+                      ) : url.checks && url.checks.length > 0 ? (
+                        url.checks
+                          .filter((check) => check.statusCode !== undefined && check.statusCode !== null)
+                          .map((check, index) => (
+                            <div key={index} className="inline-block mr-2">
+                              {check.statusCode >= 200 && check.statusCode < 300 ? (
+                                <CircleCheck className="w-5 h-5 text-green-500" />
+                              ) : (
+                                <CircleX className="w-5 h-5 text-red-500" />
+                              )}
+                            </div>
+                          ))
+                      ) : (
+                        <span className="text-gray-500">No checks available</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          className="bg-white text-red-600 hover:bg-red-200 transition-colors duration-200"
+                          variant="ghost"
+                          onClick={() => removeUrl(url._id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          className="bg-white text-blue-600 hover:bg-blue-200 transition-colors duration-200"
+                          variant="ghost"
+                          onClick={() => checkUrl(url.url, url._id)}
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500">No URLs available</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
-      <div className="flex mt-8">
-        <div className="flex-grow pr-4">
-          <Label htmlFor="newUrl">New URL</Label>
-          <Input 
-            id="newUrl" 
-            value={newUrl} 
-            onChange={(e) => setNewUrl(e.target.value)} 
-            placeholder="Enter URL" 
-          />
-          </div>
-        
-          <div className="pr-4">
-            <Label htmlFor="frequency">Check Frequency (hours)</Label>
-            <Select value={newFrequency} onValueChange={setNewFrequency}>
-              <SelectTrigger id="frequency">
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent className='bg-white'>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="12">12</SelectItem>
-                <SelectItem value="24">24</SelectItem>
-                <SelectItem value="48">48</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="">
-            <Button className="bg-black text-white mt-6" onClick={addUrl}>Add URL</Button>
-          </div>
-      </div>
-
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-
-      <Table className="mt-8">
-        <TableHeader className="mt-4 text-gray-500 text-xs">
-          <TableRow>
-            <TableHead className="w-[200px]">URL</TableHead>
-            <TableHead>Frequency</TableHead>
-            <TableHead>Check History</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="text-black text-sm">
-  {urls.length > 0 ? (
-    urls.map((url: Url) => (
-      <TableRow key={url._id}>
-        <TableCell>{url.url}</TableCell>
-        <TableCell>{url.frequency}</TableCell>
-        <TableCell>
-  {loadingUrlId === url._id ? (
-    // Display a loading indicator
-    <div className="inline-block mr-2">
-      {/* Loading spinner */}
-      <svg
-        className="animate-spin h-6 w-6 text-gray-500"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8v8H4z"
-        ></path>
-      </svg>
-    </div>
-  ) : url.checks && url.checks.length > 0 ? (
-    url.checks
-      .filter((check) => check.statusCode !== undefined && check.statusCode !== null)
-      .map((check, index) => (
-        <div key={index} className="inline-block mr-2">
-          {check.statusCode >= 200 && check.statusCode < 300 ? (
-            <CircleCheck className="w-6 h-6 text-green-700" />
-          ) : (
-            <CircleX className="w-6 h-6 text-red-600" />
-          )}
-        </div>
-      ))
-  ) : (
-    <span>No checks available</span>
-  )}
-</TableCell>
-
-        <TableCell>
-          <Button
-            className="bg-gray-100 text-black hover:bg-gray-400 mx-2 h-8"
-            variant="destructive"
-            onClick={() => removeUrl(url._id)}
-          >
-            <Trash2 className="h-4 w-4" />
-            
-          </Button>
-
-          <Button
-            className="bg-gray-100 text-black hover:bg-gray-400 h-8"
-            onClick={() => checkUrl(url.url, url._id)}
-          >
-            <RefreshCcw className="h-4 w-4" />
-            
-          </Button>
-        </TableCell>
-      </TableRow>
-    ))
-  ) : (
-    <TableRow>
-      <TableCell colSpan={4}>No URLs available</TableCell>
-    </TableRow>
-  )}
-</TableBody>
-
-
-      </Table>
       <Toaster />
     </div>
   );

@@ -59,6 +59,7 @@ export default function HomePage() {
   const [loadingUrlId, setLoadingUrlId] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('useEffect called');
     const fetchUrls = async () => {
       try {
         const response = await axios.get('http://localhost:4000/api/geturls', {
@@ -83,7 +84,7 @@ export default function HomePage() {
     };
 
     fetchUrls();
-  }, [router]);
+  }, []); // Removed 'router' from dependencies
 
   const addUrl = async () => {
     toast({
@@ -97,11 +98,8 @@ export default function HomePage() {
           { url: newUrl, frequency: newFrequency },
           { withCredentials: true }
         );
-        const newUrlData: Url = {
-          ...response.data.url,
-          checks: response.data.url.checks || [],
-        };
-        setUrls((prevUrls) => [...prevUrls, newUrlData]);
+        // Fetch updated URLs after adding a new URL
+        await fetchUrls();
         setNewUrl('');
         setNewFrequency('1');
       } catch (error) {
@@ -120,7 +118,8 @@ export default function HomePage() {
       await axios.delete(`http://localhost:4000/api/removeurl/${id}`, {
         withCredentials: true,
       });
-      setUrls((prevUrls) => prevUrls.filter((url) => url._id !== id));
+      // Fetch updated URLs after removing a URL
+      await fetchUrls();
     } catch (error) {
       console.error('Error removing URL:', error);
       setError('Failed to remove URL');
@@ -140,17 +139,19 @@ export default function HomePage() {
         { withCredentials: true }
       );
       console.log('URL Check Successful:', response.data);
-  
+
       const newCheck: CheckResult = response.data;
-  
-      setUrls((prevUrls) =>
-        prevUrls.map((url) => {
+
+      setUrls((prevUrls) => {
+        const updatedUrls = prevUrls.map((url) => {
           if (url._id === urlId) {
-            return { ...url, checks: [...(url.checks || []), newCheck] };
+            const updatedChecks = [...(url.checks || []), newCheck];
+            return { ...url, checks: updatedChecks };
           }
           return url;
-        })
-      );
+        });
+        return updatedUrls;
+      });
     } catch (error: any) {
       console.error(
         'Error checking URL:',
@@ -165,7 +166,6 @@ export default function HomePage() {
       setLoadingUrlId(null);
     }
   };
-  
 
   const handleLogout = async () => {
     try {
@@ -181,9 +181,8 @@ export default function HomePage() {
       console.error('Logout failed:', err.response?.data?.message || 'Unknown error');
     }
   };
-  
 
-
+ 
   return (
     <div className="m-8">
       <div className="flex justify-between items-center">

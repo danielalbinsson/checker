@@ -184,8 +184,8 @@ export default function HomePage() {
 
  
   return (
-    <div className="m-8">
-      <div className="flex justify-between items-center">
+    <div className="mx-8">
+      <div className="flex justify-between items-center h-16  border-b p-4">
         <h1 className="text-2xl font-bold">Checker</h1>
         <div className="flex items-center space-x-4">
           <span className="hidden sm:inline">{userEmail}</span>
@@ -206,7 +206,7 @@ export default function HomePage() {
         </div>
       </div>
       <div className="flex mt-8">
-        <div className="flex-grow">
+        <div className="flex-grow pr-4">
           <Label htmlFor="newUrl">New URL</Label>
           <Input 
             id="newUrl" 
@@ -216,7 +216,7 @@ export default function HomePage() {
           />
           </div>
         
-          <div className="">
+          <div className="pr-4">
             <Label htmlFor="frequency">Check Frequency (hours)</Label>
             <Select value={newFrequency} onValueChange={setNewFrequency}>
               <SelectTrigger id="frequency">
@@ -238,10 +238,10 @@ export default function HomePage() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <Table className="mt-4 text-gray-500 text-xs">
-        <TableHeader>
+      <Table className="mt-8">
+        <TableHeader className="mt-4 text-gray-500 text-xs">
           <TableRow>
-            <TableHead>URL</TableHead>
+            <TableHead className="w-[200px]">URL</TableHead>
             <TableHead>Frequency</TableHead>
             <TableHead>Check History</TableHead>
             <TableHead>Actions</TableHead>
@@ -302,16 +302,16 @@ export default function HomePage() {
             variant="destructive"
             onClick={() => removeUrl(url._id)}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Remove
+            <Trash2 className="h-4 w-4" />
+            
           </Button>
 
           <Button
             className="bg-gray-100 text-black hover:bg-gray-400 h-8"
             onClick={() => checkUrl(url.url, url._id)}
           >
-            <RefreshCcw className="mr-2 h-4 w-4" />
-            Check
+            <RefreshCcw className="h-4 w-4" />
+            
           </Button>
         </TableCell>
       </TableRow>

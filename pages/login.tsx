@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from 'next/router';
 import axios from 'axios';
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +19,7 @@ export default function Login() {
 
     try {
       // Send login request
-      const response = await axios.post('http://localhost:4000/auth/login', { email, password }, {
+      const response = await axios.post(`${apiUrl}/auth/login`, { email, password }, {
         withCredentials: true // Include credentials (session cookies) with the request
       });
 

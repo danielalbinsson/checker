@@ -1,3 +1,5 @@
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 const handleRegister = async (e) => {
   e.preventDefault();
 
@@ -7,7 +9,7 @@ const handleRegister = async (e) => {
   }
 
   try {
-    await axios.post('http://localhost:4000/auth/register', { email, password }, {
+    await axios.post('${apiUrl}/auth/register', { email, password }, {
       withCredentials: true // Include credentials (cookies)
     });
 

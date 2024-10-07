@@ -8,7 +8,8 @@ const urlRouter = require('./routes/url');
 const app = express();
 const port = 4000;
 
-const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://hedinapp:I9M4G44sBmPpbSDw@checkercluster.6sbkj.mongodb.net/?retryWrites=true&w=majority';
+const mongoURI = process.env.MONGODB_URI;
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 // Session Middleware
 app.use(session({
@@ -19,10 +20,21 @@ app.use(session({
   store: MongoStore.create({ mongoUrl: mongoURI }),
 }));
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://checker-amber.vercel.app'
+];
+
 // CORS Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true,
+  origin: function (origin, callback) {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // To include cookies if needed
 }));
 
 app.use(express.json());

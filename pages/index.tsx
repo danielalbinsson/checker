@@ -181,7 +181,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-teal-500 to-gray-500">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 to-sky-950">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-extrabold text-white tracking-tight">
@@ -234,7 +234,7 @@ export default function HomePage() {
             </div>
             <div>
               <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out" 
+                className="w-full bg-slate-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out" 
                 onClick={addUrl}
               >
                 Add URL
@@ -275,9 +275,9 @@ export default function HomePage() {
                           .map((check, index) => (
                             <div key={index} className="inline-block mr-2">
                               {check.statusCode >= 200 && check.statusCode < 300 ? (
-                                <CircleCheck className="w-5 h-5 text-green-500" />
+                                <CircleCheck className="w-5 h-5 text-green-700" />
                               ) : (
-                                <CircleX className="w-5 h-5 text-red-500" />
+                                <CircleX className="w-5 h-5 text-red-700" />
                               )}
                             </div>
                           ))
@@ -288,14 +288,14 @@ export default function HomePage() {
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
-                          className="bg-white text-red-600 hover:bg-red-200 transition-colors duration-200"
+                          className="bg-white text-red-700 hover:bg-red-200 transition-colors duration-200"
                           variant="ghost"
                           onClick={() => removeUrl(url._id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                         <Button
-                          className="bg-white text-blue-600 hover:bg-blue-200 transition-colors duration-200"
+                          className="bg-white text-slate-700 hover:bg-blue-200 transition-colors duration-200"
                           variant="ghost"
                           onClick={() => checkUrl(url.url, url._id)}
                         >
